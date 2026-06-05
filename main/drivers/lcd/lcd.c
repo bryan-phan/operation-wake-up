@@ -4,10 +4,9 @@
 #include "rom/ets_sys.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "drivers/i2c_bus/i2c_bus.h"
 #include "lcd.h"
 
-#define LCD_SDA         21
-#define LCD_SCL         22
 #define LCD_ADDR        0x27
 #define LCD_SPEED_HZ    100000
 
@@ -22,41 +21,7 @@ NEVER PRE-OPTIMIZE. YOU CAN SET DEFINES AND SHIT LATER. JUST MAKE EVERYTHING WOR
 That way, you can look back at it and review and you'll actually grasp what you did.
 */
 
-//-----------------------------------------
-// I2C INIT
-//-----------------------------------------
-
-static i2c_master_bus_handle_t bus_handle; // A mere reference to the ACTUAL bus being used.
 static i2c_master_dev_handle_t lcd_handle;
-
-// Intialize i2c pin and devices
-void i2c_init(void) {
-
-    // This sets up the hardware
-    i2c_master_bus_config_t i2c_mst_config = {
-        .clk_source = I2C_CLK_SRC_DEFAULT,
-        .i2c_port = I2C_NUM_0, // Hardware Block (0 or 1)
-        .scl_io_num = LCD_SCL, // SCL
-        .sda_io_num = LCD_SDA, // SDA
-        .glitch_ignore_cnt = 7,
-        .flags.enable_internal_pullup = true,
-    };
-
-    // This configures the hardware block and binds it to SCL/SDA
-    // After the bus is created, you can add devices to the bus.
-    ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &bus_handle)); // Now you have the bus with the configurations you set up from before.
-
-    // ATP, you start adding the devices you want to add. So best start looking at the datasheet and fill in the blanks.
-    // In this case, I'm configuring the LCD device so rename appropriately
-    i2c_device_config_t lcd_cfg = {
-        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-        .device_address = LCD_ADDR,
-        .scl_speed_hz = LCD_SPEED_HZ,
-    };
-
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(bus_handle, &lcd_cfg, &lcd_handle));
-
-}
 
 //-----------------------------------
 // HLF8574 Write
@@ -147,6 +112,16 @@ esp_err_t lcd_char(char c){
 // LCD INIT !!! (Don't forget that you haven't actually initialized the LCD display (device). Only the backpack.)
 
 void lcd_init(void){
+    
+    if (lcd_handle == NULL) {
+        i2c_device_config_t lcd_cfg = {
+            .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+            .device_address = LCD_ADDR,
+            .scl_speed_hz = LCD_SPEED_HZ,
+        };
+
+        ESP_ERROR_CHECK(i2c_bus_add_device(&lcd_cfg, &lcd_handle));
+    }
 
     // TaskDelay measures in ticks
     vTaskDelay(pdMS_TO_TICKS(50));
@@ -188,15 +163,17 @@ esp_err_t lcd_set_cursor(uint8_t col, uint8_t row){
 
 esp_err_t lcd_print_line(uint8_t row, const char *str){
     esp_err_t ret;
+    size_t len;
 
     if (row >= LCD_ROWS) return ESP_ERR_INVALID_ARG;
 
     ret = lcd_set_cursor(0, row);
     if (ret != ESP_OK) return ret;
 
-    for (uint8_t i = 0; i < LCD_COLS; i++){
+    len = strlen(str);
 
-        char c = (str[i] != '\0' ? str[i] : ' ');
+    for (uint8_t i = 0; i < LCD_COLS; i++){
+        char c = (i < len) ? str[i] : ' ';
 
         ret = lcd_char(c);
         if (ret != ESP_OK) return ret;

@@ -2,10 +2,8 @@
 #define LCD_H
 
 #include <stdint.h>
-#include "driver/i2c_master.h"
 #include "esp_err.h"
 
-void i2c_init(void);
 esp_err_t HLF8574_write(uint8_t data);
 esp_err_t lcd_pulse_enable(uint8_t data);
 esp_err_t lcd_write_nibble(uint8_t nibble, uint8_t rs);
