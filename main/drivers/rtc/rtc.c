@@ -73,7 +73,7 @@ esp_err_t rtc_write_time(const rtc_time_t *time){
     return i2c_master_transmit(rtc_handle, buf, sizeof(buf), -1);
 }
 
-void format_time(const rtc_time_t *time, char *time_buf, size_t buf_size){
+void get_time(const rtc_time_t *time, char *time_buf, size_t buf_size){
     uint8_t display_hour = time->hours % 12;
     if (display_hour == 0) {
         display_hour = 12;
@@ -85,7 +85,7 @@ void format_time(const rtc_time_t *time, char *time_buf, size_t buf_size){
              display_hour, time->minutes, time->seconds, ampm);
 }
 
-void format_date(const rtc_time_t *time, char *date_buf, size_t buf_size){
+void get_date(const rtc_time_t *time, char *date_buf, size_t buf_size){
     snprintf(date_buf, buf_size, "%02d/%02d/20%02d",
              time->month, time->date, time->year);
 }

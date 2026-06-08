@@ -26,5 +26,5 @@ uint8_t dec2bcd(uint8_t dec);
 esp_err_t rtc_read_time(rtc_time_t *time);
 esp_err_t rtc_write_time(const rtc_time_t *time);
 
-void format_time(const rtc_time_t *time, char *time_buf, size_t buf_size);
-void format_date(const rtc_time_t *time, char *date_buf, size_t buf_size);
+void get_time(const rtc_time_t *time, char *time_buf, size_t buf_size);
+void get_date(const rtc_time_t *time, char *date_buf, size_t buf_size);
