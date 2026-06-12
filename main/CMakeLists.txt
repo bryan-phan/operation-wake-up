@@ -1,4 +1,4 @@
-idf_component_register(SRCS "main.c" "drivers/wifi/app_wifi.c" "drivers/lcd/lcd.c" "drivers/i2c_bus/i2c_bus.c" "drivers/rtc/rtc.c"
-                    INCLUDE_DIRS "." "drivers/wifi/include" "drivers/lcd" "drivers/i2c_bus" "drivers/rtc"
-                    REQUIRES esp_driver_i2c esp_event esp_netif esp_wifi nvs_flash
+idf_component_register(SRCS "main.c" "drivers/wifi/app_wifi.c" "drivers/lcd/lcd.c" "drivers/i2c_bus/i2c_bus.c" "drivers/rtc/rtc.c" "drivers/audio/audio.c" "drivers/net/net.c" "drivers/mp3/mp3.c" "drivers/player/player.c"
+                    INCLUDE_DIRS "." "drivers/wifi/include" "drivers/lcd" "drivers/i2c_bus" "drivers/rtc" "drivers/audio" "drivers/net" "drivers/mp3" "drivers/player"
+                    REQUIRES esp_driver_i2c esp_driver_i2s esp_event esp_netif esp_wifi nvs_flash esp_http_client mbedtls
                     )

@@ -1,38 +1,24 @@
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_log.h"
+// ============================================================================
+//  operation-wake-up  -- app entry point
+//
+//  The work is split into layers (see drivers/):
+//     net    : HTTPS byte source
+//     mp3    : MP3 -> PCM decode
+//     audio  : PCM -> I2S -> MAX98357A
+//     player : wires net -> mp3 -> audio (producer/consumer)
+//
+//  main just connects Wi-Fi and hands a URL to the player.
+// ============================================================================
 
-#include "i2c_bus.h"
-#include "lcd.h"
-#include "rtc.h"
+#include "esp_err.h"
 
-static const char *TAG = "main";
+#include "app_wifi.h"     // your Wi-Fi station driver
+#include "player.h"       // the streaming MP3 player
+
+#define SONG_URL "https://pub-b88a0936b6534894a6fbae56fbc30119.r2.dev/New%20Edition%20-%20Can%20You%20Stand%20The%20Rain%20(Official%20Music%20Video).mp3"
 
 void app_main(void)
 {
-    rtc_time_t now = {0};
-    char time_buf[17];
-    char date_buf[17];
-
-    ESP_ERROR_CHECK(i2c_bus_init());
-    ds1307_init();
-    lcd_init();
-
-    while (true) {
-        esp_err_t err = rtc_read_time(&now);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "rtc_read_time failed: %s", esp_err_to_name(err));
-            ESP_ERROR_CHECK(lcd_print_line(0, "RTC read failed"));
-            ESP_ERROR_CHECK(lcd_print_line(1, "Check wiring"));
-            vTaskDelay(pdMS_TO_TICKS(1000));
-            continue;
-        }
-
-        get_date(&now, date_buf, sizeof(date_buf));
-        get_time(&now, time_buf, sizeof(time_buf));
-
-        ESP_ERROR_CHECK(lcd_print_line(0, date_buf));
-        ESP_ERROR_CHECK(lcd_print_line(1, time_buf));
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
+    ESP_ERROR_CHECK(app_wifi_connect());
+    player_play(SONG_URL);
 }
