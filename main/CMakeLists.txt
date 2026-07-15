@@ -9,6 +9,7 @@ idf_component_register(
         "drivers/net/net.c"
         "drivers/mp3/mp3.c"
         "drivers/player/player.c"
+        "drivers/sd-card/sd-card.c"
     INCLUDE_DIRS
         "."
         "drivers/wifi/include"
@@ -19,6 +20,7 @@ idf_component_register(
         "drivers/net"
         "drivers/mp3"
         "drivers/player"
+        "drivers/sd-card"
     REQUIRES
         esp_driver_i2c
         esp_driver_i2s
