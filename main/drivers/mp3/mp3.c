@@ -1,6 +1,7 @@
 // Streaming MP3 decoder: raw MP3 bytes in -> PCM frames out.
 // Wraps minimp3 and owns the sliding input window, frame framing, and ID3 skip.
 #include "mp3.h"
+#include "esp_log.h"
 
 #include <string.h>
 #include <stdbool.h>
@@ -9,6 +10,7 @@
 #include "minimp3.h"               // single-header decoder, lives in main/
 
 #define WINDOW_SIZE (16 * 1024)    // sliding input window
+#define DECODE_FLOOR 2560          // > minimp3's max frame (2304) + next header
 
 static mp3dec_t s_dec;
 static uint8_t  s_win[WINDOW_SIZE];
@@ -24,16 +26,32 @@ void mp3_reset(void)
     s_win_len     = 0;
     s_id3_checked = false;
     s_id3_skip    = 0;
+    s_decoded     = 0;
+    s_skipped     = 0;
 }
 
 // Decode every complete frame currently in the window, then keep the leftover.
-static void decode_window(mp3_pcm_cb_t cb, void *ctx)
+// `flush` drains the tail at end of stream, where no more bytes are coming.
+static void decode_window(mp3_pcm_cb_t cb, void *ctx, bool flush)
 {
     int pos = 0;
     for (;;) {
+        int avail = s_win_len - pos;
+        if (avail <= 0) {
+            break;
+        }
+        // minimp3 can't tell a truncated frame from garbage: if the frame it
+        // finds doesn't fit in the buffer we pass, it reports the whole
+        // remainder as consumed, returns no samples, and memsets its own state
+        // -- eating the partial frame and the bit reservoir with it, which then
+        // costs the next frame or two as well. Never hand it less than one
+        // max-size frame unless the stream has ended.
+        if (avail < DECODE_FLOOR && !flush) {
+            break;
+        }
+
         mp3dec_frame_info_t info;
-        int samples = mp3dec_decode_frame(&s_dec, s_win + pos, s_win_len - pos,
-                                          s_pcm, &info);
+        int samples = mp3dec_decode_frame(&s_dec, s_win + pos, avail, s_pcm, &info);
         if (info.frame_bytes == 0) {
             break;                          // need more bytes
         }
@@ -44,6 +62,11 @@ static void decode_window(mp3_pcm_cb_t cb, void *ctx)
         }
         else{
             s_skipped++;
+            if (s_skipped < 20) {
+                ESP_LOGW("mp3", "skip #%u: frame_bytes=%d hz=%d ch=%d layer=%d br=%d win_len=%d pos=%d",
+                 (unsigned)s_skipped, info.frame_bytes, info.hz, info.channels,
+                 info.layer, info.bitrate_kbps, s_win_len, pos);
+            }
         }
     }
 
@@ -92,8 +115,13 @@ void mp3_feed(const uint8_t *data, int len, mp3_pcm_cb_t cb, void *ctx)
         s_win_len += take;
         p += take;
         n -= take;
-        decode_window(cb, ctx);
+        decode_window(cb, ctx, false);
     }
+}
+
+void mp3_flush(mp3_pcm_cb_t cb, void *ctx)
+{
+    decode_window(cb, ctx, true);   // decode what's left below DECODE_FLOOR
 }
 
 void mp3_stats(uint32_t *decoded, uint32_t *skipped)

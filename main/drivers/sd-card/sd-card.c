@@ -58,7 +58,7 @@ static esp_err_t sdc_setup(sdmmc_host_t *host, sdmmc_card_t **card){
     // Mount SD Card
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
         .format_if_mount_failed = false,
-        .max_files = 5,
+        .max_files = 10,
         .allocation_unit_size = 16 * 1024
     };
     ESP_LOGI(TAG, "Mounting filesystem");

@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 
 
-#define URL "https://pub-b88a0936b6534894a6fbae56fbc30119.r2.dev/Mariah%20Carey%20-%20We%20Belong%20Together%20(Official%20Music%20Video).mp3"
+#define URL "https://pub-b88a0936b6534894a6fbae56fbc30119.r2.dev/New%20Edition%20-%20Can%20You%20Stand%20The%20Rain%20(Official%20Music%20Video).mp3"
 static const char *TAG = "mp3-download";
 
 static void write_chunk(const char *data, size_t len, void *ctx)
@@ -27,9 +27,9 @@ void app_main(void)
     esp_err_t ret;
     ESP_ERROR_CHECK(sdc_init());
 
-    if (stat("/sdcard/Mariah.mp3", &st) != 0) {
+    if (stat("/sdcard/Rain.mp3", &st) != 0) {
         ESP_ERROR_CHECK(app_wifi_connect());
-        FILE *f = fopen("/sdcard/Mariah.mp3", "wb");
+        FILE *f = fopen("/sdcard/Rain.mp3", "wb");
         if (!f) {
             ESP_LOGE(TAG, "Failed to open file for writing");
             return;
@@ -44,6 +44,6 @@ void app_main(void)
     }
     
     ESP_LOGI(TAG, "Playing the downloaded file");
-    player_play("/sdcard/Mariah.mp3");
+    player_play("/sdcard/Rain.mp3");
 
 }

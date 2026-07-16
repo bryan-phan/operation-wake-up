@@ -56,8 +56,10 @@ void audio_write(const int16_t *pcm, size_t bytes)
 // Re-point the I2S clock at a new sample rate (called once, to match the file).
 void audio_set_rate(int hz)
 {
-    i2s_channel_disable(s_tx);
+    esp_err_t e1 = i2s_channel_disable(s_tx);
     i2s_std_clk_config_t clk = I2S_STD_CLK_DEFAULT_CONFIG(hz);
-    ESP_ERROR_CHECK(i2s_channel_reconfig_std_clock(s_tx, &clk));
-    i2s_channel_enable(s_tx);
+    esp_err_t e2 = i2s_channel_reconfig_std_clock(s_tx, &clk);
+    esp_err_t e3 = i2s_channel_enable(s_tx);
+    ESP_LOGI(TAG, "set_rate(%d): disable=%s reconfig=%s enable=%s", hz,
+             esp_err_to_name(e1), esp_err_to_name(e2), esp_err_to_name(e3));
 }

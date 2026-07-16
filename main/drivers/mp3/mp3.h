@@ -22,6 +22,10 @@ void mp3_reset(void);
 // skipped automatically.
 void mp3_feed(const uint8_t *data, int len, mp3_pcm_cb_t cb, void *ctx);
 
+// Decode whatever bytes remain buffered. Call once, at end of stream: `mp3_feed`
+// deliberately holds back a partial frame's worth of data, and this releases it.
+void mp3_flush(mp3_pcm_cb_t cb, void *ctx);
+
 void mp3_stats(uint32_t *decoded, uint32_t *skipped);
 
 #endif

@@ -35,4 +35,5 @@ idf_component_register(
         sdmmc
         esp_driver_sdspi
         esp_driver_spi
+        esp_timer
 )

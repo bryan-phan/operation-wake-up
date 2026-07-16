@@ -66,7 +66,7 @@ static void on_pcm(const int16_t *pcm, int samples, int channels, int hz, void *
 {
     (void)ctx;
     if (!s_rate_set) {                  // match the amp's clock to the file
-        audio_set_rate(hz * .80);
+        audio_set_rate(hz);
         s_rate_set = true;
         ESP_LOGI(TAG, "decoding %d Hz, %d ch", hz, channels);
     }
@@ -103,8 +103,12 @@ static void decode_task(void *arg)
             break;
         }
     }
+    mp3_flush(on_pcm, NULL);        // release the tail mp3_feed held back
     ESP_LOGI(TAG, "playback finished");
     ESP_LOGI(TAG, "total samples: %u", (unsigned)s_total_samples);
+    mp3_stats(&decoded, &skipped);
+    ESP_LOGI(TAG, "frames: %u decoded, %u skipped, %u total",
+         (unsigned)decoded, (unsigned)skipped, (unsigned)(decoded + skipped));
     vTaskDelete(NULL);
 }
 
@@ -113,10 +117,6 @@ void player_play(const char *path)
 {
     audio_init();
     s_total_samples = 0;
-    mp3_stats(&decoded, &skipped);
-    ESP_LOGI(TAG, "frames: %u decoded, %u skipped, %u total",
-         (unsigned)decoded, (unsigned)skipped, (unsigned)(decoded + skipped));
-
     s_stream = xStreamBufferCreate(STREAM_BUF_SIZE, 1);
     if (s_stream == NULL) {
         ESP_LOGE(TAG, "stream buffer alloc failed");
