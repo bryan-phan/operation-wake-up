@@ -16,6 +16,7 @@ static int      s_win_len;
 static bool     s_id3_checked;
 static uint32_t s_id3_skip;
 static int16_t  s_pcm[MINIMP3_MAX_SAMPLES_PER_FRAME];
+static uint32_t s_decoded, s_skipped;
 
 void mp3_reset(void)
 {
@@ -39,8 +40,13 @@ static void decode_window(mp3_pcm_cb_t cb, void *ctx)
         pos += info.frame_bytes;
         if (samples > 0 && cb) {
             cb(s_pcm, samples, info.channels, info.hz, ctx);
+            s_decoded++;
+        }
+        else{
+            s_skipped++;
         }
     }
+
 
     if (pos > 0) {
         memmove(s_win, s_win + pos, (size_t)(s_win_len - pos));
@@ -88,4 +94,10 @@ void mp3_feed(const uint8_t *data, int len, mp3_pcm_cb_t cb, void *ctx)
         n -= take;
         decode_window(cb, ctx);
     }
+}
+
+void mp3_stats(uint32_t *decoded, uint32_t *skipped)
+{
+    if (decoded) *decoded = s_decoded;
+    if (skipped) *skipped = s_skipped;
 }

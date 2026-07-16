@@ -13,7 +13,6 @@
 #define APP_WIFI_PASS          WIFI_PASS
 #define APP_WIFI_MAXIMUM_RETRY 5
 
-/* We only need to know whether Wi-Fi connected or exhausted retries. */
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
 

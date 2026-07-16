@@ -2,7 +2,8 @@
 
 #include "freertos/FreeRTOS.h"
 #include "esp_err.h"
-#include "driver/i2s_std.h"   
+#include "driver/i2s_std.h"  
+#include "esp_log.h" 
 
 // ----- MAX98357A I2S pins -----
 #define I2S_BCLK    GPIO_NUM_26   // -> amp BCLK
@@ -14,6 +15,7 @@
 #define SAMPLE_RATE 44100
 
 static i2s_chan_handle_t s_tx;
+static const char *TAG = "audio";
 
 void audio_init(void)
 {
@@ -44,7 +46,11 @@ void audio_init(void)
 void audio_write(const int16_t *pcm, size_t bytes)
 {
     size_t written = 0;
-    i2s_channel_write(s_tx, pcm, bytes, &written, portMAX_DELAY);
+    esp_err_t err = i2s_channel_write(s_tx, pcm, bytes, &written, portMAX_DELAY);
+    if (err != ESP_OK || written != bytes) {
+        ESP_LOGW(TAG, "short write: %u of %u (%s)", (unsigned)written, (unsigned)bytes,
+                 esp_err_to_name(err));
+    }
 }
 
 // Re-point the I2S clock at a new sample rate (called once, to match the file).

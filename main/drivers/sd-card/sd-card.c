@@ -86,7 +86,7 @@ esp_err_t sdc_init(void)
 
     // Configure host
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-    host.max_freq_khz = 400;
+    host.max_freq_khz = 5000;
 
     ret = spi_bus_config(&host);
     if (ret != ESP_OK) {
