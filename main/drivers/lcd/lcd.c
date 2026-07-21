@@ -16,11 +16,6 @@
 #define LCD_COLS        16
 #define LCD_ROWS        2
 
-/*
-NEVER PRE-OPTIMIZE. YOU CAN SET DEFINES AND SHIT LATER. JUST MAKE EVERYTHING WORK.
-That way, you can look back at it and review and you'll actually grasp what you did.
-*/
-
 static i2c_master_dev_handle_t lcd_handle;
 
 //-----------------------------------

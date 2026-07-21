@@ -25,6 +25,7 @@ static const char *TAG = "player";
 
 static StreamBufferHandle_t s_stream;
 static volatile bool        s_read_done;
+static volatile bool        s_stop;
 static const char          *s_path;
 static bool                 s_rate_set;
 static int16_t              s_stereo[MP3_MAX_SAMPLES];   // mono->stereo scratch
@@ -50,6 +51,10 @@ static void read_task(void *arg)
         const uint8_t *p = buf;
         size_t n = got;
         while (n > 0) {                  // buffer may be full; send what fits, repeat
+            if (s_stop) {
+                ESP_LOGI(TAG, "read stopped");
+                break;
+            }
             size_t sent = xStreamBufferSend(s_stream, p, n, portMAX_DELAY);
             p += sent;
             n -= sent;
@@ -90,6 +95,12 @@ static void decode_task(void *arg)
     s_rate_set = false;
 
     for (;;) {
+
+        if (s_stop) {
+            ESP_LOGI(TAG, "playback stopped");
+            break;
+        }
+
         size_t got = xStreamBufferReceive(s_stream, buf, sizeof(buf),
                                           pdMS_TO_TICKS(200));
 
@@ -124,8 +135,14 @@ void player_play(const char *path)
     }
     s_path      = path;
     s_read_done = false;
+    s_stop      = false;
 
     // Consumer first (ready to drain), then the producer.
     xTaskCreate(decode_task, "decode", 24576, NULL, 5, NULL);   // big stack: minimp3
     xTaskCreate(read_task,   "read",    4096, NULL, 5, NULL);   // fread only
+}
+
+void player_stop(void)
+{
+    s_stop = true;
 }
