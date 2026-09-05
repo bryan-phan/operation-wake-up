@@ -19,6 +19,7 @@
 # Build artifacts and directories
 **/build/
 build/
+build-*/
 *.o
 *.a
 *.out
@@ -70,6 +71,9 @@ compile_commands.json
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Secrets
+main/drivers/wifi/include/wifi_credentials.h
 
 # User-specific configuration files
 *.user
